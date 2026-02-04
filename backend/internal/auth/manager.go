@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"log"
 	"os"
 	"sync"
 
@@ -67,9 +68,11 @@ func (m *Manager) Authenticate(username, password string) (string, *User, error)
 	user, ok := m.users[username]
 	m.mu.RUnlock()
 	if !ok {
+		log.Printf("auth: user not found (%s)", username)
 		return "", nil, errors.New("invalid credentials")
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+		log.Printf("auth: password mismatch (%s): %v", username, err)
 		return "", nil, errors.New("invalid credentials")
 	}
 	sessionID := newSessionID()

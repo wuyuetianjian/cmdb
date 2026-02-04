@@ -99,7 +99,7 @@ func registerPublicRoutes(server *http.Server) {
 
 		sessionID, user, err := authManager.Authenticate(payload.Username, payload.Password)
 		if err != nil {
-			nethttp.Error(w, "invalid credentials", nethttp.StatusUnauthorized)
+			nethttp.Error(w, "invalid credentials: check username/password", nethttp.StatusUnauthorized)
 			return
 		}
 
