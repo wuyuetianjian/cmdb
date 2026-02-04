@@ -7,3 +7,5 @@ data:
   database:
     driver: mysql
     dsn: user:pass@tcp(127.0.0.1:3306)/cmdb?parseTime=true
+sso:
+  redirect_url: https://sso.example.com/login?client_id=cmdb&redirect_uri=http://localhost:8000/auth/sso/callback
