@@ -16,17 +16,19 @@ cd backend
 go run ./cmd/cmdb
 ```
 
+默认数据库使用 SQLite（`DB_DRIVER=sqlite`，`DB_DSN=file:cmdb.db?_fk=1`），可通过环境变量覆盖连接信息。
+
 ## API
 
-Kratos 接口定义位于 `api/cmdb/v1/cmdb.proto`，可按需使用 protobuf/buf 生成 gRPC 与 HTTP 代码。
+Kratos 接口定义位于 `backend/api/cmdb/v1/cmdb.proto`，可按需使用 protobuf/buf 生成 gRPC 与 HTTP 代码。
 
 ## 认证与 SSO
 
 默认情况下，HTTP 服务会要求提供认证信息（`Authorization`、`X-User`、`local_session` 或 `sso_session` Cookie）。本地认证通过 `/auth/login` 提交用户名与密码（示例用途），成功后会写入 `local_session` Cookie。
 
-系统内置默认管理员账号 `admin / admin123`（可通过环境变量 `DEFAULT_ADMIN_PASSWORD` 覆盖），首次登录需要修改密码。可调用 `/auth/password` 完成密码更新。
+系统内置默认管理员账号 `admin / admin123`（可通过环境变量 `DEFAULT_ADMIN_PASSWORD` 覆盖），首次登录需要修改密码。可调用 `/auth/password` 完成密码更新。管理员账号始终允许本地登录，不依赖 SSO。
 
-SSO 默认关闭，需在后端配置后启用。使用环境变量 `SSO_ENABLED=true` 开启，并配置 `SSO_SAML2_LOGIN_URL` 指向 IdP 的 SAML2 登录地址。配置示例见 `configs/config.yaml` 的 `sso` 段落。
+SSO 是否启用存储在数据库中，可通过页面的 “SSO 设置” 开关进行配置。后端仍需配置 `SSO_SAML2_LOGIN_URL` 指向 IdP 的 SAML2 登录地址，配置示例见 `configs/config.yaml` 的 `sso` 段落。
 
 权限采用标签形式（例如 `assets:read`、`assets:write`），服务端会根据用户标签判断是否具备对应读写权限。示例接口 `/assets` 读取需要 `assets:read`，写入需要 `assets:write`。
 

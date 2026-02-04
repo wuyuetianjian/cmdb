@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	nethttp "net/http"
@@ -12,6 +13,8 @@ import (
 	"github.com/go-kratos/kratos/v2/transport/http"
 
 	"cmdb/internal/auth"
+	"cmdb/internal/data"
+	"cmdb/internal/data/ent"
 	internalMiddleware "cmdb/internal/middleware"
 )
 
@@ -19,7 +22,7 @@ type HTTPServer struct {
 	*http.Server
 }
 
-func NewHTTPServer() *HTTPServer {
+func NewHTTPServer(entClient *ent.Client) *HTTPServer {
 	publicPaths := map[string]struct{}{
 		"/health":            {},
 		"/auth/login":        {},
@@ -27,29 +30,38 @@ func NewHTTPServer() *HTTPServer {
 		"/auth/sso/callback": {},
 	}
 
+	ssoRepo := data.NewSSOConfigRepo(entClient)
+
 	server := http.NewServer(
 		http.Address(":8000"),
 		http.Middleware(
 			recovery.Recovery(),
-			internalMiddleware.AuthMiddleware(publicPaths, validateRequest),
+			internalMiddleware.AuthMiddleware(publicPaths, func(operation string, header transport.Header) error {
+				return validateRequest(operation, header)
+			}),
 		),
 	)
 
-	registerPublicRoutes(server)
+	registerPublicRoutes(server, ssoRepo)
 
 	return &HTTPServer{Server: server}
 }
 
 var authManager = auth.NewManager()
 
-func registerPublicRoutes(server *http.Server) {
+func registerPublicRoutes(server *http.Server, ssoRepo *data.SSOConfigRepo) {
 	server.HandleFunc("/health", func(w nethttp.ResponseWriter, r *nethttp.Request) {
 		w.WriteHeader(nethttp.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
 
 	server.HandleFunc("/auth/sso/login", func(w nethttp.ResponseWriter, r *nethttp.Request) {
-		if !ssoEnabled() {
+		enabled, err := ssoEnabled(r.Context(), ssoRepo)
+		if err != nil {
+			nethttp.Error(w, err.Error(), nethttp.StatusInternalServerError)
+			return
+		}
+		if !enabled {
 			nethttp.Error(w, "sso disabled", nethttp.StatusNotFound)
 			return
 		}
@@ -61,7 +73,12 @@ func registerPublicRoutes(server *http.Server) {
 	})
 
 	server.HandleFunc("/auth/sso/callback", func(w nethttp.ResponseWriter, r *nethttp.Request) {
-		if !ssoEnabled() {
+		enabled, err := ssoEnabled(r.Context(), ssoRepo)
+		if err != nil {
+			nethttp.Error(w, err.Error(), nethttp.StatusInternalServerError)
+			return
+		}
+		if !enabled {
 			nethttp.Error(w, "sso disabled", nethttp.StatusNotFound)
 			return
 		}
@@ -160,6 +177,48 @@ func registerPublicRoutes(server *http.Server) {
 		_, _ = w.Write([]byte("password updated"))
 	})
 
+	server.HandleFunc("/sso/config", func(w nethttp.ResponseWriter, r *nethttp.Request) {
+		sessionID, err := extractSessionID(r)
+		if err != nil {
+			nethttp.Error(w, "missing session", nethttp.StatusUnauthorized)
+			return
+		}
+
+		if !authManager.IsAdmin(sessionID) {
+			nethttp.Error(w, "forbidden", nethttp.StatusForbidden)
+			return
+		}
+
+		switch r.Method {
+		case nethttp.MethodGet:
+			config, err := ssoRepo.GetOrCreate(r.Context())
+			if err != nil {
+				nethttp.Error(w, "load config failed", nethttp.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(config)
+		case nethttp.MethodPost:
+			var payload struct {
+				Enabled  bool   `json:"enabled"`
+				Protocol string `json:"protocol"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+				nethttp.Error(w, "invalid payload", nethttp.StatusBadRequest)
+				return
+			}
+			config, err := ssoRepo.Update(r.Context(), payload.Enabled, payload.Protocol)
+			if err != nil {
+				nethttp.Error(w, "update failed", nethttp.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(config)
+		default:
+			nethttp.Error(w, "method not allowed", nethttp.StatusMethodNotAllowed)
+		}
+	})
+
 	server.HandleFunc("/assets", func(w nethttp.ResponseWriter, r *nethttp.Request) {
 		sessionID, err := extractSessionID(r)
 		if err != nil {
@@ -181,8 +240,12 @@ func registerPublicRoutes(server *http.Server) {
 	})
 }
 
-func ssoEnabled() bool {
-	return strings.EqualFold(os.Getenv("SSO_ENABLED"), "true")
+func ssoEnabled(ctx context.Context, ssoRepo *data.SSOConfigRepo) (bool, error) {
+	config, err := ssoRepo.GetOrCreate(ctx)
+	if err != nil {
+		return false, err
+	}
+	return config.Enabled, nil
 }
 
 func validateRequest(operation string, header transport.Header) error {

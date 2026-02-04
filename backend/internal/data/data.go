@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"cmdb/internal/data/ent"
+	_ "modernc.org/sqlite"
 )
 
 type Data struct {
@@ -22,4 +23,3 @@ func NewEntClient(ctx context.Context, driver, dsn string) (*ent.Client, error) 
 	}
 	return client, nil
 }
-

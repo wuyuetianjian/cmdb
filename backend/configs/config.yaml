@@ -8,8 +8,6 @@ data:
     driver: mysql
     dsn: user:pass@tcp(127.0.0.1:3306)/cmdb?parseTime=true
 sso:
-  enabled: false
-  protocol: saml2
   saml2:
     idp_login_url: https://sso.example.com/saml/login
     sp_entity_id: cmdb

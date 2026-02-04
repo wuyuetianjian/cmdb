@@ -123,6 +123,14 @@ func (m *Manager) Session(sessionID string) (Session, bool) {
 	return session, ok
 }
 
+func (m *Manager) IsAdmin(sessionID string) bool {
+	session, ok := m.Session(sessionID)
+	if !ok {
+		return false
+	}
+	return session.IsAdmin
+}
+
 func (m *Manager) RequirePermission(sessionID, permission string) bool {
 	session, ok := m.Session(sessionID)
 	if !ok {
