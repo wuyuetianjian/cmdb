@@ -184,7 +184,7 @@ func ssoEnabled() bool {
 	return strings.EqualFold(os.Getenv("SSO_ENABLED"), "true")
 }
 
-func validateRequest(operation string, header http.Header) error {
+func validateRequest(operation string, header nethttp.Header) error {
 	cookie := header.Get("Cookie")
 	if cookie == "" {
 		return fmt.Errorf("missing session")
