@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
+	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/go-kratos/kratos/v2/transport/http"
 
 	"cmdb/internal/auth"
@@ -184,7 +185,7 @@ func ssoEnabled() bool {
 	return strings.EqualFold(os.Getenv("SSO_ENABLED"), "true")
 }
 
-func validateRequest(operation string, header nethttp.Header) error {
+func validateRequest(operation string, header transport.Header) error {
 	cookie := header.Get("Cookie")
 	if cookie == "" {
 		return fmt.Errorf("missing session")
