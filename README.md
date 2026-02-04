@@ -20,7 +20,7 @@ go run ./cmd/cmdb
 
 ## API
 
-Kratos 接口定义位于 `backend/api/cmdb/v1/cmdb.proto`，可按需使用 protobuf/buf 生成 gRPC 与 HTTP 代码。
+Kratos 接口定义位于 `backend/api/cmdb/v1/cmdb.proto`，可按需使用 protobuf/buf 生成 gRPC 与 HTTP 代码。生成说明见 `backend/api/README.md`。
 
 ## 认证与 SSO
 
