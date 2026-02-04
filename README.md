@@ -16,6 +16,10 @@ cd backend
 go run ./cmd/cmdb
 ```
 
+## API
+
+Kratos 接口定义位于 `api/cmdb/v1/cmdb.proto`，可按需使用 protobuf/buf 生成 gRPC 与 HTTP 代码。
+
 ## 认证与 SSO
 
 默认情况下，HTTP 服务会要求提供认证信息（`Authorization`、`X-User`、`local_session` 或 `sso_session` Cookie）。本地认证通过 `/auth/login` 提交用户名与密码（示例用途），成功后会写入 `local_session` Cookie。
