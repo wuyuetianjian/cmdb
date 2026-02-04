@@ -20,7 +20,7 @@ go run ./cmd/cmdb
 
 默认情况下，HTTP 服务会要求提供认证信息（`Authorization`、`X-User`、`local_session` 或 `sso_session` Cookie）。本地认证通过 `/auth/login` 提交用户名与密码（示例用途），成功后会写入 `local_session` Cookie。
 
-系统内置默认管理员账号 `admin / admin123`，首次登录需要修改密码。可调用 `/auth/password` 完成密码更新。
+系统内置默认管理员账号 `admin / admin123`（可通过环境变量 `DEFAULT_ADMIN_PASSWORD` 覆盖），首次登录需要修改密码。可调用 `/auth/password` 完成密码更新。
 
 SSO 默认关闭，需在后端配置后启用。使用环境变量 `SSO_ENABLED=true` 开启，并配置 `SSO_SAML2_LOGIN_URL` 指向 IdP 的 SAML2 登录地址。配置示例见 `configs/config.yaml` 的 `sso` 段落。
 

@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"os"
 	"sync"
 
 	"golang.org/x/crypto/bcrypt"
@@ -47,7 +48,7 @@ func (m *Manager) ensureDefaultAdmin() {
 	if _, ok := m.users[DefaultAdminUsername]; ok {
 		return
 	}
-	hash, _ := bcrypt.GenerateFromPassword([]byte(DefaultAdminPassword), bcrypt.DefaultCost)
+	hash, _ := bcrypt.GenerateFromPassword([]byte(defaultAdminPassword()), bcrypt.DefaultCost)
 	m.users[DefaultAdminUsername] = &User{
 		Username:           DefaultAdminUsername,
 		PasswordHash:       string(hash),
@@ -58,6 +59,10 @@ func (m *Manager) ensureDefaultAdmin() {
 }
 
 func (m *Manager) Authenticate(username, password string) (string, *User, error) {
+	m.mu.Lock()
+	m.ensureDefaultAdmin()
+	m.mu.Unlock()
+
 	m.mu.RLock()
 	user, ok := m.users[username]
 	m.mu.RUnlock()
@@ -72,6 +77,13 @@ func (m *Manager) Authenticate(username, password string) (string, *User, error)
 	m.sessions[sessionID] = Session{Username: user.Username, Tags: user.Tags, IsAdmin: user.IsAdmin}
 	m.mu.Unlock()
 	return sessionID, user, nil
+}
+
+func defaultAdminPassword() string {
+	if value := os.Getenv("DEFAULT_ADMIN_PASSWORD"); value != "" {
+		return value
+	}
+	return DefaultAdminPassword
 }
 
 func (m *Manager) RegisterSSOSession(username string, tags []string, isAdmin bool) string {
