@@ -16,6 +16,10 @@ export const hasSSOCookie = (): boolean => {
   return document.cookie.split(';').some((item) => item.trim().startsWith('sso_session='))
 }
 
+export const hasLocalCookie = (): boolean => {
+  return document.cookie.split(';').some((item) => item.trim().startsWith('local_session='))
+}
+
 export const isAuthenticated = (): boolean => {
-  return Boolean(getAuthUser()) || hasSSOCookie()
+  return Boolean(getAuthUser()) || hasSSOCookie() || hasLocalCookie()
 }

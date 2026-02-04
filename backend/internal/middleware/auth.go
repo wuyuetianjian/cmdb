@@ -23,7 +23,10 @@ func AuthMiddleware(publicPaths map[string]struct{}) middleware.Middleware {
 			}
 
 			header := transportInfo.RequestHeader()
-			if header.Get("Authorization") == "" && header.Get("X-User") == "" && !hasSSOSession(header.Get("Cookie")) {
+			if header.Get("Authorization") == "" &&
+				header.Get("X-User") == "" &&
+				!hasSSOSession(header.Get("Cookie")) &&
+				!hasLocalSession(header.Get("Cookie")) {
 				return nil, errors.Unauthorized("UNAUTHORIZED", "missing authentication")
 			}
 
@@ -34,4 +37,8 @@ func AuthMiddleware(publicPaths map[string]struct{}) middleware.Middleware {
 
 func hasSSOSession(cookieHeader string) bool {
 	return strings.Contains(cookieHeader, "sso_session=")
+}
+
+func hasLocalSession(cookieHeader string) bool {
+	return strings.Contains(cookieHeader, "local_session=")
 }
