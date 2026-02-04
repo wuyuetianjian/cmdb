@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"strings"
 
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/middleware"
@@ -10,7 +9,10 @@ import (
 )
 
 // AuthMiddleware enforces authentication for non-public endpoints.
-func AuthMiddleware(publicPaths map[string]struct{}) middleware.Middleware {
+func AuthMiddleware(
+	publicPaths map[string]struct{},
+	validator func(operation string, header transport.Header) error,
+) middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			transportInfo, ok := transport.FromServerContext(ctx)
@@ -23,22 +25,13 @@ func AuthMiddleware(publicPaths map[string]struct{}) middleware.Middleware {
 			}
 
 			header := transportInfo.RequestHeader()
-			if header.Get("Authorization") == "" &&
-				header.Get("X-User") == "" &&
-				!hasSSOSession(header.Get("Cookie")) &&
-				!hasLocalSession(header.Get("Cookie")) {
-				return nil, errors.Unauthorized("UNAUTHORIZED", "missing authentication")
+			if header.Get("Authorization") == "" && header.Get("X-User") == "" {
+				if err := validator(transportInfo.Operation(), header); err != nil {
+					return nil, errors.Unauthorized("UNAUTHORIZED", err.Error())
+				}
 			}
 
 			return handler(ctx, req)
 		}
 	}
-}
-
-func hasSSOSession(cookieHeader string) bool {
-	return strings.Contains(cookieHeader, "sso_session=")
-}
-
-func hasLocalSession(cookieHeader string) bool {
-	return strings.Contains(cookieHeader, "local_session=")
 }
