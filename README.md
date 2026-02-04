@@ -9,6 +9,9 @@ cd backend
 # 安装依赖
 # go mod tidy
 
+# 生成 ent 代码（第一次执行或修改 schema 后）
+# go run entgo.io/ent/cmd/ent generate ./internal/data/ent/schema
+
 # 启动
 go run ./cmd/cmdb
 ```
