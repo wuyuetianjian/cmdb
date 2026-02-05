@@ -2,9 +2,8 @@ package data
 
 import (
 	"context"
+	"errors"
 	"fmt"
-
-	entlib "entgo.io/ent"
 
 	"cmdb/internal/data/ent"
 )
@@ -28,7 +27,7 @@ func (r *SSOConfigRepo) GetOrCreate(ctx context.Context) (*SSOConfig, error) {
 	if err == nil {
 		return mapSSOConfig(config), nil
 	}
-	if err != nil && !entlib.IsNotFound(err) {
+	if err != nil && !errors.Is(err, ent.ErrNotFound) {
 		return nil, fmt.Errorf("query sso config: %w", err)
 	}
 
@@ -42,7 +41,7 @@ func (r *SSOConfigRepo) GetOrCreate(ctx context.Context) (*SSOConfig, error) {
 func (r *SSOConfigRepo) Update(ctx context.Context, enabled bool, protocol string) (*SSOConfig, error) {
 	config, err := r.ent.SSOConfig.Query().Only(ctx)
 	if err != nil {
-		if !entlib.IsNotFound(err) {
+		if !errors.Is(err, ent.ErrNotFound) {
 			return nil, fmt.Errorf("query sso config: %w", err)
 		}
 		config, err = r.ent.SSOConfig.Create().Save(ctx)
