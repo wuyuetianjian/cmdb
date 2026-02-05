@@ -4,6 +4,8 @@
 
 ## 后端
 
+后端结构参考 [go-kratos/kratos-layout](https://github.com/go-kratos/kratos-layout)。
+
 ```bash
 cd backend
 # 安装依赖
