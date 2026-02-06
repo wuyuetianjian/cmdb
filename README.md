@@ -30,6 +30,8 @@ Kratos 接口定义位于 `backend/api/cmdb/v1/cmdb.proto`，可按需使用 pro
 
 系统内置默认管理员账号 `admin / admin123`（可通过环境变量 `DEFAULT_ADMIN_PASSWORD` 覆盖），首次登录需要修改密码。可调用 `/auth/password` 完成密码更新。管理员账号始终允许本地登录，不依赖 SSO。
 
+用户账号信息会持久化到后端本地数据库文件（默认 `backend/users.db.json`，可通过 `USER_DB_FILE` 调整）。
+
 SSO 是否启用存储在数据库中，可通过页面的 “SSO 设置” 开关进行配置。后端仍需配置 `SSO_SAML2_LOGIN_URL` 指向 IdP 的 SAML2 登录地址，配置示例见 `configs/config.yaml` 的 `sso` 段落。
 
 权限采用标签形式（例如 `assets:read`、`assets:write`），服务端会根据用户标签判断是否具备对应读写权限。示例接口 `/assets` 读取需要 `assets:read`，写入需要 `assets:write`。
