@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package cmdb.conf;
+
+option go_package = "cmdb/internal/conf;conf";
+
+message Bootstrap {
+  Server server = 1;
+  Data data = 2;
+}
+
+message Server {
+  message HTTP {
+    string addr = 1;
+    int32 timeout = 2;
+  }
+  message GRPC {
+    string addr = 1;
+    int32 timeout = 2;
+  }
+  HTTP http = 1;
+  GRPC grpc = 2;
+}
+
+message Data {
+  message Database {
+    string driver = 1;
+    string dsn = 2;
+  }
+  Database database = 1;
+}

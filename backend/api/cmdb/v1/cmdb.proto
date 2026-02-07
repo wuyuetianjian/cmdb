@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package cmdb.v1;
+
+option go_package = "cmdb/api/cmdb/v1;v1";
+
+service AuthService {
+  rpc Login (LoginRequest) returns (LoginReply);
+  rpc ChangePassword (ChangePasswordRequest) returns (ChangePasswordReply);
+  rpc SSOLogin (SSOLoginRequest) returns (SSOLoginReply);
+  rpc SSOCb (SSOCallbackRequest) returns (SSOCallbackReply);
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginReply {
+  string username = 1;
+  bool must_change_password = 2;
+  repeated string tags = 3;
+}
+
+message ChangePasswordRequest {
+  string new_password = 1;
+}
+
+message ChangePasswordReply {
+  bool ok = 1;
+}
+
+message SSOLoginRequest {}
+
+message SSOLoginReply {
+  string redirect_url = 1;
+}
+
+message SSOCallbackRequest {
+  string code = 1;
+}
+
+message SSOCallbackReply {
+  bool ok = 1;
+}
